@@ -1,8 +1,11 @@
+import java.util.concurrent.Semaphore;
+
 public class Philosopher extends Thread {
 	private GraphicTable table;
 	private Chopstick left;
 	private Chopstick right;
 	private int ID;
+	private Semaphore eatSemaphore;
 	final int timeThink_max = 5000;
 	final int timeNextFork = 100;
 	final int timeEat_max = 5000;
@@ -12,6 +15,7 @@ public class Philosopher extends Thread {
 		this.table = table;
 		this.left = left;
 		this.right = right;
+		this.eatSemaphore = new Semaphore(4);
 		setName("Philosopher "+ID);
 	}
 	
@@ -32,7 +36,14 @@ public class Philosopher extends Thread {
 			
 			// Done with thinking
 			System.out.println(getName()+" finished thinking"); 
-			 
+			
+			// Try to get a position to eat
+			try {
+                eatSemaphore.acquire();
+            } catch (InterruptedException e) {
+                System.out.println(e);
+            }
+
 			// and now I am hungry!
 			System.out.println(getName()+" is hungry"); 
 			// Tell the GUI I am hungry...
@@ -40,12 +51,7 @@ public class Philosopher extends Thread {
 			
 			// Let's try to get the left chopstick
 			System.out.println(getName()+" wants left chopstick");
-			// try catch for the wait() command
-			try {
-				left.take();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			left.take();
 			
 			// Tell the GUI that I took the left chopstick
 			table.takeChopstick(ID, left.getID());
@@ -60,12 +66,7 @@ public class Philosopher extends Thread {
 			
 			// Ok, enough etiquette nonesense, now I need my right chopstick
 			System.out.println(getName()+" wants right chopstick");
-			// try catch for the wait() command
-			try {
-				right.take();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			right.take();
 
 			// Got it!
 			table.takeChopstick(ID, right.getID());
@@ -81,7 +82,7 @@ public class Philosopher extends Thread {
 			
 			// Ok, I am really full now
 			System.out.println(getName()+" finished eating"); 
-			
+
 			// I just realized I did not wash these chopsticks 
 			// and the philosopher on my right is coming down with a flu 
 			
@@ -95,6 +96,9 @@ public class Philosopher extends Thread {
 			right.release();
 			System.out.println(getName()+" released right chopstick");
 		
+			// Release the permit after eating
+			eatSemaphore.release();
+
 		}
 	}
 }

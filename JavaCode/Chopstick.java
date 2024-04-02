@@ -7,9 +7,13 @@ public class Chopstick {
 		this.free = true;
 	}
 	
-	synchronized void take() throws InterruptedException {
+	synchronized void take() {
 		while (!free) {
-			wait();
+			try{
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		free = false;
 	}
